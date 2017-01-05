@@ -7,7 +7,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PaintFlagsDrawFilter;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -39,6 +42,7 @@ public class MusicIcon extends View {
     private int mRes;
     private Paint mRoadPaint;
     private Paint mBitmapPaint;
+    private PaintFlagsDrawFilter pfd;
 
     private int mTextXStart;
     private int mTextYStart;
@@ -148,20 +152,37 @@ public class MusicIcon extends View {
         Path path = new Path();
         path.addCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, Path.Direction.CCW);
         canvas.save();
+
+
         canvas.clipPath(path);
         if (mBitmapPaint == null) {
             mBitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-            mBitmapPaint.setStrokeWidth(mProgressWidth);
+//            mBitmapPaint.setStrokeWidth(mProgressWidth);
             mBitmapPaint.setAntiAlias(true);
-            mBitmapPaint.setStyle(Paint.Style.STROKE);
+            mBitmapPaint.setStyle(Paint.Style.FILL);
+            mBitmapPaint.setDither(true);
+            mBitmapPaint.setFilterBitmap(true);
+            pfd = new PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         }
+//        Bitmap mask=Bitmap.createBitmap(300, 300, bitmap.getConfig());
+//        Canvas cc=new Canvas(mask);
+//        cc.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2,mBitmapPaint);
+//        int sc = canvas.saveLayer(0,0,getWidth(),getHeight(), null, Canvas.ALL_SAVE_FLAG);
         canvas.rotate(mDegree, getWidth() / 2, getHeight() / 2);
         if (bitmap == null) {
             bitmap = BitmapFactory.decodeResource(mContext.getResources(), mRes);
             bitmap = scaleBitmap(bitmap, getWidth(), getHeight());
         }
+        canvas.setDrawFilter(pfd);
         canvas.drawBitmap(bitmap, 0, 0, mBitmapPaint);
+
+//        mBitmapPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
+
+//        canvas.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, mBitmapPaint);
+//        mBitmapPaint.setXfermode(null);
+//        canvas.restoreToCount(sc);
         canvas.restore();
+
 
         //画文字
         mText = (int) (mProgress / total * 100) + "%";
@@ -174,7 +195,6 @@ public class MusicIcon extends View {
             mRoadPaint.setAntiAlias(true);
             mRoadPaint.setStyle(Paint.Style.STROKE);
             mRoadPaint.setColor(mProgressColor);
-            mRoadPaint.setAntiAlias(true);
         }
         canvas.drawCircle(getWidth() / 2, getHeight() / 2, circleR, mRoadPaint);
 
@@ -201,7 +221,8 @@ public class MusicIcon extends View {
         float scaleHeight = ((float) newHeight) / height;
         Matrix matrix = new Matrix();
         matrix.postScale(scaleWidth, scaleHeight);// 使用后乘
-        Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
+//        matrix.postRotate(mDegree, getWidth() / 2, getWidth() / 2);
+        Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, true);
         if (!origin.isRecycled()) {
             origin.recycle();
         }
@@ -229,7 +250,7 @@ public class MusicIcon extends View {
 
     public void rotate() {
 //        Log.i("tag", "旋转-3");
-        mDegree += 0.5f;
+        mDegree += 1;
         invalidate();
     }
 
@@ -238,7 +259,7 @@ public class MusicIcon extends View {
         public void run() {
 //            Log.i("tag", "旋转-2");
             rotate();
-            mHandler.postDelayed(runnable, 20);
+            mHandler.postDelayed(runnable, 25);
         }
     };
 
@@ -246,7 +267,7 @@ public class MusicIcon extends View {
     protected void onVisibilityChanged(View changedView, int visibility) {
         if (visibility == View.VISIBLE) {
             Log.i("tag", "view VISIBLE");
-            mHandler.postDelayed(runnable, 20);
+            mHandler.postDelayed(runnable, 25);
         } else {
             Log.i("tag", "view INVISIBLE");
             mHandler.removeCallbacks(runnable);
